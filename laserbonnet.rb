@@ -28,6 +28,11 @@ class Laserbonnet
       send_command(char)
     end
   end
+
+  def send_command(char)
+    return unless char =~ /(a|b|x|y|s|t|u|d|l|r|1|2)/i
+    send(char)
+  end
 end
 
 Laserbonnet.new.listen
