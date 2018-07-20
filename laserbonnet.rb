@@ -16,7 +16,7 @@ class Laserbonnet
   end
 
   def get_id
-    mac = `./mac_address.sh`.strip
+    mac = `./scripts/mac_address.sh`.strip
     serial = `cat /proc/cpuinfo  | grep Serial | cut -d ' ' -f 2`.strip
     "#{serial}|#{mac}"
   end
