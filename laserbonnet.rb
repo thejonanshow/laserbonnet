@@ -9,6 +9,7 @@ class Laserbonnet
     system("stty raw -echo")
     @id = get_id
     @redis = Redis.new(url: ENV['REDIS_URL'])
+    send("online")
   end
 
   def send(command)
@@ -37,4 +38,4 @@ end
 
 Laserbonnet.new.listen
 
-at_exit { system("stty -raw echo") }
+at_exit { system("stty -raw echo"); exit }
