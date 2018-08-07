@@ -31,7 +31,7 @@ class Laserbonnet
   end
 
   def send_command(char)
-    return unless char =~ /(a|b|x|y|s|t|u|d|l|r|1|2)/i
+    return unless char =~ /(a|b|x|y|s|t|u|d|l|r|1|2|7|8|9|0)/i
     send(char)
   end
 end
