@@ -10,7 +10,7 @@ WorkingDirectory=/home/pi/src/laserbonnet
 StandardInput=tty
 StandardOutput=inherit
 StandardError=inherit
-Restart=always
+Restart=no
 User=pi
 EnvironmentFile=/home/pi/src/laserbonnet/.env
 
