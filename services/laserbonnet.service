@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh
+ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh
 WorkingDirectory=/home/pi/src/laserbonnet
 StandardOutput=inherit
 StandardError=inherit
