@@ -3,6 +3,7 @@ Bundler.require
 Dotenv.load
 
 require 'thread'
+require 'io/console'
 
 class LaserLogger
   def initialize
@@ -95,8 +96,8 @@ class Laserbonnet
 
   def listen
     loop do
-      char = STDIN.getc
-      break if char =~ /q/i
+      char = STDIN.getch
+      break if char =~ /(q|\u0003)/i
       send_command(char)
     end
   rescue => e
