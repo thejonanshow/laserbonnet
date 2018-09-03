@@ -4,8 +4,13 @@ GEM
     byebug (10.0.2)
     coderay (1.1.2)
     dotenv (2.5.0)
+    faraday (0.11.0)
+      multipart-post (>= 1.2, < 3)
+    faraday_middleware (0.12.2)
+      faraday (>= 0.7.4, < 1.0)
     json (2.1.0)
     method_source (0.9.0)
+    multipart-post (2.0.0)
     pry (0.11.3)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
@@ -19,6 +24,8 @@ PLATFORMS
 
 DEPENDENCIES
   dotenv
+  faraday
+  faraday_middleware
   json
   pry-byebug
   redis
@@ -27,4 +34,4 @@ RUBY VERSION
    ruby 2.5.0p0
 
 BUNDLED WITH
-   1.16.2
+   1.16.4
