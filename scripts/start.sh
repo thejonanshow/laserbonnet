@@ -1,3 +1,7 @@
+source /usr/local/share/chruby/chruby.sh
+chruby 2.5.1
+
 git pull origin master
-/usr/local/bin/chruby-exec ruby-2.5.1 -- bundle install
-/usr/local/bin/chruby-exec ruby-2.5.1 -- bundle exec /home/pi/src/start_laserbonnet.rb
+bundle install
+
+bundle exec /home/pi/src/start_laserbonnet.rb
