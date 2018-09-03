@@ -1,0 +1,16 @@
+[Unit]
+Description=Laserbonnet
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh
+WorkingDirectory=/home/pi/src/laserbonnet
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+EnvironmentFile=/home/pi/src/laserbonnet/.env
+
+[Install]
+WantedBy=multi-user.target
