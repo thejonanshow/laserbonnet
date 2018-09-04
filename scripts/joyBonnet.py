@@ -155,8 +155,10 @@ def log(msg):
     sys.stdout.flush()
 
 def send_sock(msg):
-    if laserbonnet:
-        laserbonnet.send(msg.encode('ascii'))
+    if laserbonnet is None:
+        laserbonnet, addr = SERVER.accept()
+
+    laserbonnet.send(msg.encode('ascii'))
 
 def close_sock():
     SERVER.close()
@@ -193,8 +195,6 @@ while True:
   except IOError:
     continue
   #print("(%d , %d)" % (x, y))
-
-  laserbonnet, addr = SERVER.accept()
 
   if (y > ANALOG_THRESH_POS) and not analog_states[0]:
     analog_states[0] = True
