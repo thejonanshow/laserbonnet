@@ -187,6 +187,8 @@ def handle_button(pin):
 
     if pin >= 1000:
         if not state:
+            send_sock(KEYMAP[pin])
+
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 1)
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 0)
             ui.syn()
