@@ -133,7 +133,6 @@ PORT = 31879
 SERVER = socket.socket()
 SERVER.bind((HOST, PORT))
 SERVER.listen(5)
-laserbonnet = None
 
 # GPIO init
 gpio.setwarnings(False)
@@ -155,7 +154,7 @@ def log(msg):
     sys.stdout.flush()
 
 def send_sock(msg):
-    if laserbonnet is None:
+    if laserbonnet not in locals():
         laserbonnet, addr = SERVER.accept()
 
     laserbonnet.send(msg.encode('ascii'))
