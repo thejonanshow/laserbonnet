@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh < bonnet_pipe
+ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh
 WorkingDirectory=/home/pi/src/laserbonnet
 Restart=no
 User=pi
