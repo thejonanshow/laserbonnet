@@ -1,7 +1,8 @@
 #!/bin/bash
-if [[ -e bonnet_pipe ]]; then
+if [[ -e /home/pi/src/laserbonnet/bonnet_pipe ]]; then
   echo bonnet_pipe already exists
 else
-  mkfifo bonnet_pipe
+  mkfifo /home/pi/src/laserbonnet/bonnet_pipe
+  chown pi:pi /home/pi/src/laserbonnet/bonnet_pipe
   echo created bonnet_pipe
 fi
