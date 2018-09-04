@@ -154,7 +154,8 @@ def log(msg):
     sys.stdout.flush()
 
 def send_sock(msg):
-    if laserbonnet not in locals():
+    if 'laserbonnet' not in locals():
+        print "reassigning laserbonnet"
         laserbonnet, addr = SERVER.accept()
 
     laserbonnet.send(msg.encode('ascii'))
