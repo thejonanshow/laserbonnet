@@ -71,6 +71,25 @@ KEYS= { # EDIT KEYCODES IN THIS TABLE TO YOUR PREFERENCES:
         2003:     ecodes.KEY_0,
 }
 
+KEYTEXT = {
+        BUTTON_A: 'a',
+        BUTTON_B: 'b',
+        BUTTON_X: 'x',
+        BUTTON_Y: 'y',
+        SELECT:   't',
+        START:    's',
+        PLAYER1:  '1',
+        PLAYER2:  '2',
+        1000:     'u',
+        1001:     'd',
+        1002:     'l',
+        1003:     'r',
+        2000:     '7',
+        2001:     '8',
+        2002:     '9',
+        2003:     '0',
+}
+
 ###################################### ADS1015 microdriver #################################
 # Register and other configuration values:
 ADS1x15_DEFAULT_ADDRESS        = 0x48
@@ -168,7 +187,7 @@ def close_sock():
 atexit.register(close_sock)
 
 def handle_button(pin):
-    send_sock("pressed: " + str(pin))
+    send_sock(KEYTEXT[pin])
 
     key = KEYS[pin]
     time.sleep(BOUNCE_TIME)
