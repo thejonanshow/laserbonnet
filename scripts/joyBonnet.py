@@ -187,14 +187,14 @@ for button in BUTTONS:
     gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
 
 while True:
-  laserbonnet, addr = SERVER.accept()
-
   try:
     y = 800 - ads_read(0)
     x = ads_read(1) - 800
   except IOError:
     continue
   #print("(%d , %d)" % (x, y))
+
+  laserbonnet, addr = SERVER.accept()
 
   if (y > ANALOG_THRESH_POS) and not analog_states[0]:
     analog_states[0] = True
