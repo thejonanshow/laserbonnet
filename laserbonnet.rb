@@ -4,10 +4,24 @@ Dotenv.load
 
 require 'thread'
 require 'io/console'
+require 'fileutils'
+
+class LocalLogger
+  def initialize
+    FileUtils.mkdir_p "./logs"
+    @file = File.open("./logs/laserbonnet.log", "a+")
+  end
+
+  def puts(line)
+    @file.puts "#{Time.now} - #{line}"
+  end
+end
+
+LOG = LocalLogger.new
 
 class LaserLogger
   def initialize
-    puts "Initializing LaserLogger"
+    LOG.puts "Initializing LaserLogger"
 
     @client = Faraday.new(url: "http://logblazer-production.herokuapp.com") do |faraday|
       faraday.request :json
@@ -17,14 +31,14 @@ class LaserLogger
   end
 
   def log(id:, line:, level:)
-    puts "Sending logs to logblazer: #{level} - #{line}"
+    LOG.puts "Sending logs to logblazer: #{level} - #{line}"
     data = {
       source: "laserbonnet",
       id: id,
       level: level,
       line: line
     }
-    puts data
+    LOG.puts data
     @client.post('/loglines/create', data)
   end
 end
@@ -33,7 +47,7 @@ class Laserbonnet
   attr_reader :redis
 
   def initialize
-    puts "Initializing Laserbonnet"
+    LOG.puts "Initializing Laserbonnet"
     @id = get_id
     @log_queue = Queue.new
     @logger = LaserLogger.new
@@ -57,6 +71,8 @@ class Laserbonnet
   end
 
   def start_logger
+    LOG.puts "Starting remote logger"
+
     Thread.new do
       loop do
         unless @log_queue.empty?
@@ -99,17 +115,22 @@ class Laserbonnet
   end
 
   def listen
+    LOG.puts "Listening..."
+
     loop do
       char = STDIN.getch
       break if char =~ /(q|\u0003)/i
       send_command(char)
     end
+
+    LOG.puts "Stopped listening..."
   rescue => e
     @log_queue << {
       id: @id,
       level: "error",
       line: "#{e.class}: #{e}"
     }
+    LOG.puts "#{e.class}: #{e}"
   end
 
   def send_command(char)
