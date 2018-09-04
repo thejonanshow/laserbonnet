@@ -7,6 +7,8 @@ require 'io/console'
 
 class LaserLogger
   def initialize
+    puts "Initializing LaserLogger"
+
     @client = Faraday.new(url: "http://logblazer-production.herokuapp.com") do |faraday|
       faraday.request :json
       faraday.response :json
@@ -15,6 +17,7 @@ class LaserLogger
   end
 
   def log(id:, line:, level:)
+    puts "Sending logs to logblazer: #{level} - #{line}"
     data = {
       source: "laserbonnet",
       id: id,
@@ -30,6 +33,7 @@ class Laserbonnet
   attr_reader :redis
 
   def initialize
+    puts "Initializing Laserbonnet"
     @id = get_id
     @log_queue = Queue.new
     @logger = LaserLogger.new
