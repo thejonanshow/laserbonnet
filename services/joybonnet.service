@@ -9,6 +9,7 @@ ExecStartPre=/usr/bin/mkfifo bonnet_pipe
 ExecStart=/usr/bin/python /home/pi/src/laserbonnet/scripts/joyBonnet.py > bonnet_pipe
 Restart=no
 User=pi
+PermissionsStartOnly=true
 
 [Install]
 WantedBy=multi-user.target
