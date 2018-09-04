@@ -5,8 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStartPre=mkfifo bonnet_pipe
-ExecStart=python /boot/joyBonnet.py
+ExecStartPre=/usr/bin/mkfifo bonnet_pipe
+ExecStart=/usr/bin/python /boot/joyBonnet.py > bonnet_pipe
 Restart=no
 User=pi
 
