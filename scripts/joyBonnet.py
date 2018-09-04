@@ -133,7 +133,7 @@ HOST = '127.0.0.1'
 PORT = '31879'
 
 SOCK = socket.socket()
-SOCK.connect(HOST, PORT)
+SOCK.connect((HOST, PORT))
 
 # GPIO init
 gpio.setwarnings(False)
