@@ -1,3 +1,7 @@
 #!/bin/bash
-! [[ -e bonnet_pipe ]] && mkfifo bonnet_pipe
-exit 0
+if [[ -e bonnet_pipe ]]; then
+  echo bonnet_pipe already exists
+else
+  mkfifo bonnet_pipe
+  echo created bonnet_pipe
+fi
