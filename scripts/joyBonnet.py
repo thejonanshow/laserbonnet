@@ -159,6 +159,7 @@ def send_sock(msg):
 
     if laserbonnet is None:
         global laserbonnet, addr = SERVER.accept()
+        print "assigned laserbonnet: " + str(addr)
 
     laserbonnet.send(msg.encode('ascii'))
 
