@@ -14,6 +14,8 @@ import time
 import signal
 import os
 import sys
+import socket
+import atexit
 from datetime import datetime
 
 try:
@@ -125,8 +127,13 @@ def ads_read(channel):
 ######################## main program
 
 os.system("sudo modprobe uinput")
-
 bus     = SMBus(1)
+
+HOST = '127.0.0.1'
+PORT = '31879'
+
+SOCK = socket.socket()
+SOCK.connect(HOST, PORT)
 
 # GPIO init
 gpio.setwarnings(False)
@@ -150,6 +157,9 @@ def log(msg):
 def handle_button(pin):
     key = KEYS[pin]
     time.sleep(BOUNCE_TIME)
+
+    sock_send(key)
+
     if pin >= 1000:
       state = analog_states[pin-1000]
     else:
@@ -167,6 +177,13 @@ def handle_button(pin):
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
 
+def sock_send(msg):
+    SOCK.send(msg)
+
+def close_sock():
+    SOCK.close()
+
+atexit.register(close_sock)
 
 for button in BUTTONS:
     gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
