@@ -187,8 +187,6 @@ def close_sock():
 atexit.register(close_sock)
 
 def handle_button(pin):
-    send_sock(KEYTEXT[pin])
-
     key = KEYS[pin]
     time.sleep(BOUNCE_TIME)
 
@@ -197,8 +195,13 @@ def handle_button(pin):
     else:
       state = 0 if gpio.input(pin) else 1
 
+    if state:
+        send_sock(KEYTEXT[pin])
+
     if pin >= 1000:
         if not state:
+            send_sock(KEYTEXT[pin])
+
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 1)
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 0)
             ui.syn()
