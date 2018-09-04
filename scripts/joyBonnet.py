@@ -163,8 +163,6 @@ def close_sock():
 atexit.register(close_sock)
 
 def handle_button(pin):
-    send_sock(pin)
-
     key = KEYS[pin]
     time.sleep(BOUNCE_TIME)
 
@@ -189,8 +187,6 @@ for button in BUTTONS:
     gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
 
 while True:
-  laserbonnet, addr = SERVER.accept()
-
   try:
     y = 800 - ads_read(0)
     x = ads_read(1) - 800
