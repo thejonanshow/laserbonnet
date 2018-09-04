@@ -4,10 +4,9 @@ After=network-online.target joybonnet.service
 Wants=network-online.target
 
 [Service]
-Type=oneshot
 ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh
 WorkingDirectory=/home/pi/src/laserbonnet
-Restart=no
+Restart=always
 User=pi
 EnvironmentFile=/home/pi/src/laserbonnet/.env
 
