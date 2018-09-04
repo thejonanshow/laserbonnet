@@ -1,0 +1,14 @@
+[Unit]
+Description=Laserbonnet
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStartPre=mkfifo bonnet_pipe
+ExecStart=python /boot/joyBonnet.py
+Restart=no
+User=pi
+
+[Install]
+WantedBy=multi-user.target

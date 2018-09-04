@@ -1,11 +1,11 @@
 [Unit]
 Description=Laserbonnet
-After=network-online.target
+After=network-online.target joybonnet.service
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh
+ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh < bonnet_pipe
 WorkingDirectory=/home/pi/src/laserbonnet
 StandardInput=tty
 StandardOutput=tty
