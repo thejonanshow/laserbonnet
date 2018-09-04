@@ -161,8 +161,6 @@ def handle_button(pin):
     key = KEYS[pin]
     time.sleep(BOUNCE_TIME)
 
-    sock_send(key)
-
     if pin >= 1000:
       state = analog_states[pin-1000]
     else:
