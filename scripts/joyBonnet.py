@@ -71,6 +71,25 @@ KEYS= { # EDIT KEYCODES IN THIS TABLE TO YOUR PREFERENCES:
         2003:     ecodes.KEY_0,
 }
 
+KEYMAP = {
+	BUTTON_A: 'a', # 'A' button
+	BUTTON_B: 'b',  # 'B' button
+	BUTTON_X: 'x',        # 'X' button
+	BUTTON_Y: 'y',        # 'Y' button
+	SELECT:   't',    # 'Select' button
+	START:    's',    # 'Start' button
+	PLAYER1:  '1',        # '#1' button         
+	PLAYER2:  '2',        # '#2' button
+	1000:     'u',       # Analog up
+	1001:     'd',     # Analog down
+	1002:     'l',     # Analog left
+	1003:     'r',    # Analog right
+        2000:     '7',
+        2001:     '8',
+        2002:     '9',
+        2003:     '0',
+}
+
 ###################################### ADS1015 microdriver #################################
 # Register and other configuration values:
 ADS1x15_DEFAULT_ADDRESS        = 0x48
@@ -172,15 +191,17 @@ def handle_button(pin):
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 0)
             ui.syn()
 
-    if laserbonnet:
-        msg = "Something happened"
-        laserbonnet.send(msg.encode('ascii'))
+    send_sock(KEYMAP[pin])
 
     ui.write(ecodes.EV_KEY, key, state)
     ui.syn()
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
+
+def send_sock(msg):
+    if laserbonnet:
+        laserbonnet.send(msg.encode('ascii'))
 
 def close_sock():
     SERVER.close()
