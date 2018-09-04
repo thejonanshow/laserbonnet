@@ -155,9 +155,9 @@ def log(msg):
 
 laserbonnet = None
 def send_sock(msg):
-    if laserbonnet is None:
+    if global laserbonnet is None:
         print "reassigning laserbonnet"
-        laserbonnet, addr = SERVER.accept()
+        global laserbonnet, addr = SERVER.accept()
 
     laserbonnet.send(msg.encode('ascii'))
 
