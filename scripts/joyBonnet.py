@@ -129,8 +129,12 @@ def ads_read(channel):
 os.system("sudo modprobe uinput")
 bus     = SMBus(1)
 
-HOST = '127.0.0.1'
+HOST = 'localhost'
 PORT = 31879
+
+SERVER = socket.socket()
+SERVER.bind((HOST, PORT))
+SERVER.listen(5)
 
 SOCK = socket.socket()
 SOCK.connect((HOST, PORT))
@@ -182,6 +186,7 @@ def sock_send(msg):
 
 def close_sock():
     SOCK.close()
+    SERVER.close()
 
 atexit.register(close_sock)
 
