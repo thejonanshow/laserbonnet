@@ -130,7 +130,7 @@ os.system("sudo modprobe uinput")
 bus     = SMBus(1)
 
 HOST = '127.0.0.1'
-PORT = '31879'
+PORT = 31879
 
 SOCK = socket.socket()
 SOCK.connect((HOST, PORT))
