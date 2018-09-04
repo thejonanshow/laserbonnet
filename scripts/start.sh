@@ -8,5 +8,5 @@ git pull origin master
 bundle install
 
 echo "starting laserbonnet"
-ruby /home/pi/src/laserbonnet/start_laserbonnet.rb < bonnet_pipe &
+ruby /home/pi/src/laserbonnet/start_laserbonnet.rb &
 echo "laserbonnet started successfully"

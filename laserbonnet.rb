@@ -5,6 +5,7 @@ Dotenv.load
 require 'thread'
 require 'io/console'
 require 'fileutils'
+require 'socket'
 
 class LocalLogger
   def initialize
@@ -51,6 +52,8 @@ class Laserbonnet
     @id = get_id
     @log_queue = Queue.new
     @logger = LaserLogger.new
+
+    @joy = TCPSocket.open('localhost', 31879)
 
     start_logger
 
@@ -117,8 +120,7 @@ class Laserbonnet
   def listen
     LOG.puts "Listening..."
 
-    loop do
-      char = STDIN.getch
+    while char = @joy.getc
       break if char =~ /(q|\u0003)/i
       send_command(char)
     end

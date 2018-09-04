@@ -4,11 +4,9 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStartPre=/home/pi/src/laserbonnet/scripts/make_fifo.sh
-ExecStart=/usr/bin/python /home/pi/src/laserbonnet/scripts/joyBonnet.py > bonnet_pipe
+ExecStart=/usr/bin/python /home/pi/src/laserbonnet/scripts/joyBonnet.py
 Restart=always
-User=pi
-PermissionsStartOnly=true
+User=root
 
 [Install]
 WantedBy=multi-user.target
