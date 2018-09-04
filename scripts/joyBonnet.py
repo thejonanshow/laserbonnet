@@ -14,8 +14,6 @@ import time
 import signal
 import os
 import sys
-import socket
-import atexit
 from datetime import datetime
 
 try:
@@ -69,25 +67,6 @@ KEYS= { # EDIT KEYCODES IN THIS TABLE TO YOUR PREFERENCES:
         2001:     ecodes.KEY_8,
         2002:     ecodes.KEY_9,
         2003:     ecodes.KEY_0,
-}
-
-KEYMAP = {
-	BUTTON_A: 'a', # 'A' button
-	BUTTON_B: 'b',  # 'B' button
-	BUTTON_X: 'x',        # 'X' button
-	BUTTON_Y: 'y',        # 'Y' button
-	SELECT:   't',    # 'Select' button
-	START:    's',    # 'Start' button
-	PLAYER1:  '1',        # '#1' button         
-	PLAYER2:  '2',        # '#2' button
-	1000:     'u',       # Analog up
-	1001:     'd',     # Analog down
-	1002:     'l',     # Analog left
-	1003:     'r',    # Analog right
-        2000:     '7',
-        2001:     '8',
-        2002:     '9',
-        2003:     '0',
 }
 
 ###################################### ADS1015 microdriver #################################
@@ -148,15 +127,6 @@ def ads_read(channel):
 os.system("sudo modprobe uinput")
 bus     = SMBus(1)
 
-HOST = 'localhost'
-PORT = 31879
-
-SERVER = socket.socket()
-SERVER.bind((HOST, PORT))
-SERVER.listen(5)
-
-laserbonnet = None
-
 # GPIO init
 gpio.setwarnings(False)
 gpio.setmode(gpio.BCM)
@@ -187,27 +157,15 @@ def handle_button(pin):
 
     if pin >= 1000:
         if not state:
-            send_sock(KEYMAP[pin+1000])
-
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 1)
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 0)
             ui.syn()
-
-    send_sock(KEYMAP[pin])
 
     ui.write(ecodes.EV_KEY, key, state)
     ui.syn()
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
-
-def send_sock(msg):
-    if laserbonnet:
-        laserbonnet.send(msg.encode('ascii'))
-
-def close_sock():
-    SERVER.close()
-atexit.register(close_sock)
 
 for button in BUTTONS:
     gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
