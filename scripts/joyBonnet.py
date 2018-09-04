@@ -14,6 +14,8 @@ import time
 import signal
 import os
 import sys
+import socket
+import atexit
 from datetime import datetime
 
 try:
@@ -126,6 +128,12 @@ def ads_read(channel):
 
 os.system("sudo modprobe uinput")
 bus     = SMBus(1)
+HOST = 'localhost'
+PORT = 31879
+SERVER = socket.socket()
+SERVER.bind((HOST, PORT))
+SERVER.listen(5)
+laserbonnet = None
 
 # GPIO init
 gpio.setwarnings(False)
@@ -146,7 +154,17 @@ def log(msg):
     sys.stdout.write("\n")
     sys.stdout.flush()
 
+def send_sock(msg):
+    if laserbonnet:
+        laserbonnet.send(msg.encode('ascii'))
+
+def close_sock():
+    SERVER.close()
+atexit.register(close_sock)
+
 def handle_button(pin):
+    send_sock(pin)
+
     key = KEYS[pin]
     time.sleep(BOUNCE_TIME)
 
@@ -171,6 +189,8 @@ for button in BUTTONS:
     gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
 
 while True:
+  laserbonnet, addr = SERVER.accept()
+
   try:
     y = 800 - ads_read(0)
     x = ads_read(1) - 800
