@@ -165,6 +165,8 @@ def close_sock():
 atexit.register(close_sock)
 
 def handle_button(pin):
+    send_sock(pin)
+
     key = KEYS[pin]
     time.sleep(BOUNCE_TIME)
 
