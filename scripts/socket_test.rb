@@ -2,6 +2,8 @@ require 'socket'
 
 socket = TCPSocket.open('localhost', 31879)
 
-while message = s.getc
+while message = socket.getc
   puts message.chomp
 end
+
+atexit { socket.close }
