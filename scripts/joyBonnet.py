@@ -136,8 +136,7 @@ SERVER = socket.socket()
 SERVER.bind((HOST, PORT))
 SERVER.listen(5)
 
-SOCK = socket.socket()
-SOCK.connect((HOST, PORT))
+laserbonnet = None
 
 # GPIO init
 gpio.setwarnings(False)
@@ -175,25 +174,26 @@ def handle_button(pin):
             ui.write(ecodes.EV_KEY, KEYS[pin+1000], 0)
             ui.syn()
 
+    if laserbonnet:
+        msg = "Something happened"
+        laserbonnet.send(msg.encode('ascii'))
+
     ui.write(ecodes.EV_KEY, key, state)
     ui.syn()
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
 
-def sock_send(msg):
-    SOCK.send(msg)
-
 def close_sock():
-    SOCK.close()
     SERVER.close()
-
 atexit.register(close_sock)
 
 for button in BUTTONS:
     gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
 
 while True:
+  laserbonnet, addr = SERVER.accept()
+
   try:
     y = 800 - ads_read(0)
     x = ads_read(1) - 800
