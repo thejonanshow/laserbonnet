@@ -8,7 +8,11 @@ git pull origin master
 bundle install
 
 gpg --batch --yes -r Astro -o /home/pi/src/laserbonnet/.env -d /home/pi/src/laserbonnet/.env.enc
+echo "updated .env"
 
 echo "starting laserbonnet"
+
+echo "Laserbonnet is online!" | wall
+
 ruby /home/pi/src/laserbonnet/start_laserbonnet.rb
 echo "laserbonnet stopped"
