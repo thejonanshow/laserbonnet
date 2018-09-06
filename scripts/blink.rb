@@ -10,8 +10,7 @@ def blink
 end
 
 def laserbonnet_ready
-  # journalctl_output = `journalctl -u laserbonnet | tail -n 1`.chomp
-  journalctl_output = "Sep 04 #{DateTime.now.strftime("%T")} raspberrypi bash[313]: Laserbonnet is listening..."
+  journalctl_output = `journalctl -u laserbonnet | tail -n 1`.chomp
 
   journal_secs = DateTime.parse(journalctl_output[0..14]).to_time.to_i
 
@@ -24,7 +23,7 @@ end
 
 until (laserbonnet_ready)
   puts "Waiting for laserbonnet to come online..."
-  sleep 0.5
+  sleep 1
 end
 
 blink
