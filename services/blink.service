@@ -5,3 +5,4 @@ Description=Blinks the LED when Laserbonnet starts listening
 Type=simple
 ExecStart=/home/pi/.rubies/ruby-2.5.1/bin/ruby /home/pi/src/laserbonnet/scripts/blink.rb
 User=root
+WantedBy=multi-user.target
