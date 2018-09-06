@@ -1,8 +1,12 @@
 [Unit]
 Description=Blinks the LED when Laserbonnet starts listening
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 ExecStart=/home/pi/.rubies/ruby-2.5.1/bin/ruby /home/pi/src/laserbonnet/scripts/blink.rb
 User=root
+
+[Install]
 WantedBy=multi-user.target

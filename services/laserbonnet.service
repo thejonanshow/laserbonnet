@@ -1,6 +1,6 @@
 [Unit]
 Description=Laserbonnet
-After=network-online.target joybonnet.service
+After=network-online.target joybonnet.service blink.service
 Wants=network-online.target
 
 [Service]
