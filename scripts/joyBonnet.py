@@ -19,11 +19,6 @@ import atexit
 from datetime import datetime
 
 try:
-    from evdev import uinput, UInput, ecodes as ecodes
-except ImportError:
-    exit("This library requires the evdev module\nInstall with: sudo pip install evdev")
-
-try:
     import RPi.GPIO as gpio
 except ImportError:
     exit("This library requires the RPi.GPIO module\nInstall with: sudo pip install RPi.GPIO")
@@ -49,27 +44,6 @@ BUTTONS = [BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y, SELECT, START, PLAYER1, PLAYE
 ANALOG_THRESH_NEG = -600
 ANALOG_THRESH_POS = 600
 analog_states = [False, False, False, False]  # up down left right
-
-KEYS= { # EDIT KEYCODES IN THIS TABLE TO YOUR PREFERENCES:
-	# See /usr/include/linux/input.h for keycode names
-	# Keyboard        Bonnet        EmulationStation
-	BUTTON_A: ecodes.KEY_A, # 'A' button
-	BUTTON_B: ecodes.KEY_B,  # 'B' button
-	BUTTON_X: ecodes.KEY_X,        # 'X' button
-	BUTTON_Y: ecodes.KEY_Y,        # 'Y' button
-	SELECT:   ecodes.KEY_T,    # 'Select' button
-	START:    ecodes.KEY_S,    # 'Start' button
-	PLAYER1:  ecodes.KEY_1,        # '#1' button         
-	PLAYER2:  ecodes.KEY_2,        # '#2' button
-	1000:     ecodes.KEY_U,       # Analog up
-	1001:     ecodes.KEY_D,     # Analog down
-	1002:     ecodes.KEY_L,     # Analog left
-	1003:     ecodes.KEY_R,    # Analog right
-        2000:     ecodes.KEY_7,
-        2001:     ecodes.KEY_8,
-        2002:     ecodes.KEY_9,
-        2003:     ecodes.KEY_0,
-}
 
 KEYTEXT = {
         BUTTON_A: 'a',
@@ -145,7 +119,6 @@ def ads_read(channel):
 
 ######################## main program
 
-os.system("sudo modprobe uinput")
 bus     = SMBus(1)
 HOST = 'localhost'
 PORT = 31879
@@ -157,13 +130,6 @@ SERVER.listen(10)
 gpio.setwarnings(False)
 gpio.setmode(gpio.BCM)
 gpio.setup(BUTTONS, gpio.IN, pull_up_down=gpio.PUD_UP)
-
-try:
-    ui = UInput({ecodes.EV_KEY: KEYS.values()}, name="retrogame", bustype=ecodes.BUS_USB)
-except uinput.UInputError as e:
-    sys.stdout.write(e.message)
-    sys.stdout.write("Have you tried running as root? sudo {}".format(sys.argv[0]))
-    sys.exit(0)
 
 def log(msg):
     sys.stdout.write(str(datetime.now()))
@@ -187,7 +153,7 @@ def close_sock():
 atexit.register(close_sock)
 
 def handle_button(pin):
-    key = KEYS[pin]
+    key = KEYTEXT[pin]
     time.sleep(BOUNCE_TIME)
 
     if pin >= 1000:
@@ -196,18 +162,11 @@ def handle_button(pin):
       state = 0 if gpio.input(pin) else 1
 
     if state:
-        send_sock(KEYTEXT[pin])
+        send_sock(key)
 
     if pin >= 1000:
         if not state:
-            send_sock(KEYTEXT[pin+1000])
-
-            ui.write(ecodes.EV_KEY, KEYS[pin+1000], 1)
-            ui.write(ecodes.EV_KEY, KEYS[pin+1000], 0)
-            ui.syn()
-
-    ui.write(ecodes.EV_KEY, key, state)
-    ui.syn()
+            send_sock(key)
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
