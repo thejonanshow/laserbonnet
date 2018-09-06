@@ -4,13 +4,11 @@ After=network-online.target joybonnet.service
 Wants=network-online.target
 
 [Service]
-ExecStartPre=/home/pi/.rubies/ruby-2.5.1/bin/ruby /home/pi/src/laserbonnet/scripts/blink.rb &
 ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh
 WorkingDirectory=/home/pi/src/laserbonnet
 Restart=always
 User=pi
 EnvironmentFile=/home/pi/src/laserbonnet/.env
-PermissionsStartOnly=true
 
 [Install]
 WantedBy=multi-user.target
