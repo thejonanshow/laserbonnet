@@ -3,7 +3,7 @@ require "date"
 @start_secs = DateTime.parse(`date +"%b %d %T"`).to_time.to_i + 10
 
 def blink
-  [1,0,1,0,1,0].each do |n|
+  [1,0,1,0,1,0,1,0,1,0].each do |n|
     `echo #{n} | tee /sys/class/leds/led0/brightness`
     sleep 0.5
   end
