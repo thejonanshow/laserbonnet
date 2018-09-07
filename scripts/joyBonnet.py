@@ -179,7 +179,7 @@ def handle_button(pin):
     if state:
         send_sock(KEY_PRESS[pin])
     else:
-        send_sock(KEY_RELEASE[pin]))
+        send_sock(KEY_RELEASE[pin])
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
