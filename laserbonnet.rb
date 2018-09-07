@@ -7,6 +7,7 @@ require 'io/console'
 require 'fileutils'
 require 'socket'
 
+
 class LocalLogger
   def initialize
     FileUtils.mkdir_p "./logs"
@@ -46,6 +47,8 @@ end
 
 class Laserbonnet
   attr_reader :redis
+
+  CHARACTER_WHITELIST = /(a|b|x|y|s|t|p|w|u|d|l|r|1|2|3|4|5|6|7|8|9|0|-|=)/i
 
   def initialize
     LOG.puts "Initializing Laserbonnet"
@@ -136,7 +139,7 @@ class Laserbonnet
   end
 
   def send_command(char)
-    return unless char =~ /(a|b|x|y|s|t|u|d|l|r|1|2|3|4|5|6|7|8|9|0|-|=)/i
+    return unless char =~ CHARACTER_WHITELIST
     send(char)
   end
 end
