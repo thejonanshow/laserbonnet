@@ -7,8 +7,8 @@ systemd_path = Dir.exists?("/etc/systemd/system/") ? "/etc/systemd/system" : "/t
 
 local = systemd_path == "/tmp"
 
-Dir.each_child(services_dir) do |service_name|
-  service_file = File.join(services_dir, service_name)
+Dir.glob("#{services_dir}/*.service").each do |service_file|
+  service_name = service_file.split("/").last
 
   puts "Stopping #{service_name}..."
   `systemctl stop #{service_name}` unless local
