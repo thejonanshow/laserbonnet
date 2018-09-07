@@ -10,9 +10,6 @@ local = systemd_path == "/tmp"
 Dir.glob("#{services_dir}/*.service").each do |service_file|
   service_name = service_file.split("/").last
 
-  puts "Stopping #{service_name}..."
-  `systemctl stop #{service_name}` unless local
-
   puts "Copying #{service_file} to #{systemd_path}..."
   FileUtils.cp service_file, systemd_path
 
