@@ -25,6 +25,7 @@ retry wget -q --tries=10 --timeout=20 --spider http://google.com
 if [[ $? -eq 0 ]]; then
   echo "network is online"
 
+  cd /home/pi/src/laserbonnet
   git pull origin master
   echo "git pull complete"
 
