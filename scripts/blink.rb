@@ -1,6 +1,6 @@
 require "date"
 
-@start_secs = DateTime.parse(`date +"%b %d %T"`).to_time.to_i + 10
+@start_secs = DateTime.parse(`date +"%b %d %T"`).to_time.to_i
 
 def blink
   [1,0,1,0,1,0,1,0,1,0].each do |n|
@@ -12,12 +12,13 @@ end
 def laserbonnet_ready
   journalctl_output = `journalctl -u laserbonnet | tail -n 1`.chomp
 
-  journal_secs = DateTime.parse(journalctl_output[0..14]).to_time.to_i
+  month, day, time, _, _, *log_line = journalctl_output.split
+  log_line = log_line.join(" ")
 
-  log_line = journalctl_output.split(/bash\[\d+\]: /).last
+  journal_secs = DateTime.parse("#{month} #{day} #{time}").to_time.to_i
+
   expected_line = "Laserbonnet is listening..."
 
-  puts @start_secs - journal_secs
   @start_secs <= journal_secs && log_line == expected_line
 end
 
