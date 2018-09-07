@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/home/pi/src/laserbonnet/scripts/refresh.rb
+ExecStart=/bin/bash /home/pi/src/laserbonnet/scripts/refresh.sh
 User=root
 
 [Install]
