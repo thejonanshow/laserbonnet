@@ -9,7 +9,7 @@ if [[ $? -eq 0 ]]; then
   gpg --batch --yes -r Astro -o /home/pi/src/laserbonnet/.env -d /home/pi/src/laserbonnet/.env.enc
   echo "updated .env"
 
-  /home/pi/src/laserbonnet/scripts/install_services.sh
+  /home/pi/src/laserbonnet/scripts/install_services.rb
 else
   echo "no network connection"
 fi
