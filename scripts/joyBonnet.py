@@ -39,30 +39,46 @@ SELECT   = 20
 START    = 26
 PLAYER1  = 23
 PLAYER2  = 22
-BUTTONS = [BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y, SELECT, START, PLAYER1, PLAYER2]
+UP       = 1000
+DOWN     = 1001
+LEFT     = 1002
+RIGHT    = 1003
+BUTTONS  = [BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y, SELECT, START, PLAYER1, PLAYER2]
 
 ANALOG_THRESH_NEG = -600
 ANALOG_THRESH_POS = 600
 analog_states = [False, False, False, False]  # up down left right
 
-KEYTEXT = {
+KEY_PRESS = {
         BUTTON_A: 'a',
         BUTTON_B: 'b',
         BUTTON_X: 'x',
         BUTTON_Y: 'y',
         SELECT:   't',
         START:    's',
-        PLAYER1:  '1',
-        PLAYER2:  '2',
-        1000:     'u',
-        1001:     'd',
-        1002:     'l',
-        1003:     'r',
-        2000:     '7',
-        2001:     '8',
-        2002:     '9',
-        2003:     '0',
+        PLAYER1:  'p',
+        PLAYER2:  'w',
+        UP:       'u',
+        DOWN:     'd',
+        LEFT:     'l',
+        RIGHT:    'r',
 }
+
+KEY_RELEASE = {
+        BUTTON_A: '1',
+        BUTTON_B: '2',
+        BUTTON_X: '3',
+        BUTTON_Y: '4',
+        SELECT:   '5',
+        START:    '6',
+        PLAYER1:  '7',
+        PLAYER2:  '8',
+        UP:       '9',
+        DOWN:     '0',
+        LEFT:     '-',
+        RIGHT:    '=',
+}
+
 
 ###################################### ADS1015 microdriver #################################
 # Register and other configuration values:
@@ -153,7 +169,6 @@ def close_sock():
 atexit.register(close_sock)
 
 def handle_button(pin):
-    key = KEYTEXT[pin]
     time.sleep(BOUNCE_TIME)
 
     if pin >= 1000:
@@ -162,11 +177,9 @@ def handle_button(pin):
       state = 0 if gpio.input(pin) else 1
 
     if state:
-        send_sock(key)
-
-    if pin >= 1000:
-        if not state:
-            send_sock(key)
+        send_sock(KEY_PRESS[pin])
+    else:
+        send_sock(KEY_RELEASE[pin]))
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
