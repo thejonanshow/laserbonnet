@@ -1,11 +1,11 @@
 [Unit]
-Description=Blink
+Description=Refresh
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-Type=simple
-ExecStart=/home/pi/.rubies/ruby-2.5.1/bin/ruby /home/pi/src/laserbonnet/scripts/blink.rb
+Type=oneshot
+ExecStart=/home/pi/src/laserbonnet/scripts/refresh.sh
 User=root
 
 [Install]

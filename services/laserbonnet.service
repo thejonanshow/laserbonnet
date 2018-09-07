@@ -1,7 +1,7 @@
 [Unit]
 Description=Laserbonnet
-After=network-online.target joybonnet.service blink.service
-Wants=network-online.target
+After=network-online.target joybonnet.service blink.service refresh.service
+Wants=network-online.target joybonnet.service blink.service refresh.service
 
 [Service]
 ExecStart=/bin/bash -lc /home/pi/src/laserbonnet/scripts/start.sh

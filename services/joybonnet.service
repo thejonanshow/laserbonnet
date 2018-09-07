@@ -1,7 +1,7 @@
 [Unit]
 Description=JoyBonnet
-After=network-online.target
-Wants=network-online.target
+After=network-online.target refresh.service
+Wants=network-online.target refresh.service
 
 [Service]
 ExecStart=/usr/bin/python /home/pi/src/laserbonnet/scripts/joyBonnet.py
