@@ -75,8 +75,8 @@ KEY_RELEASE = {
         PLAYER2:  '8',
         UP:       '9',
         DOWN:     '0',
-        LEFT:     '-',
-        RIGHT:    '=',
+        LEFT:     'k',
+        RIGHT:    'e',
 }
 
 
