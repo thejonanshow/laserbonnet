@@ -56,7 +56,7 @@ KEY_PRESS = {
         BUTTON_Y: 'y',
         SELECT:   't',
         START:    's',
-        PLAYER1:  'p',
+        PLAYER1:  'o',
         PLAYER2:  'w',
         UP:       'u',
         DOWN:     'd',

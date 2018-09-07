@@ -48,7 +48,7 @@ end
 class Laserbonnet
   attr_reader :redis
 
-  CHARACTER_WHITELIST = /(a|b|x|y|s|t|p|w|u|d|l|r|1|2|3|4|5|6|7|8|9|0|-|=)/i
+  CHARACTER_WHITELIST = /(a|b|x|y|s|t|o|w|u|d|l|r|1|2|3|4|5|6|7|8|9|0|-|=)/i
 
   def initialize
     LOG.puts "Initializing Laserbonnet"
