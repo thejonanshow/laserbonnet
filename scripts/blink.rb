@@ -11,25 +11,23 @@ def blink
   end
 end
 
-def laserbonnet_ready
-  puts "Subscribing to redis..."
+puts "Subscribing to redis..."
 
-  Redis.new.subscribe("system") do |on|
-    on.subscribe do |channel, subscriptions|
-      puts "Subscribed to #{channel}"
+Redis.new.subscribe("system") do |on|
+  on.subscribe do |channel, subscriptions|
+    puts "Subscribed to #{channel}"
+  end
+
+  on.message do |channel, message|
+    puts "Message received on #{channel}: #{message}"
+
+    if message == "start_laserbonnet"
+      blink
+      exit
     end
+  end
 
-    on.message do |channel, message|
-      puts "Message received on #{channel}: #{message}"
-
-      if message == "start_laserbonnet"
-        blink
-        exit
-      end
-    end
-
-    on.unsubscribe do |channel, subscriptions|
-      puts "Unsubscribed from #{channel}"
-    end
+  on.unsubscribe do |channel, subscriptions|
+    puts "Unsubscribed from #{channel}"
   end
 end
