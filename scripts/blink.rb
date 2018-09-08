@@ -21,7 +21,6 @@ def laserbonnet_ready
 
     on.message do |channel, message|
       puts "Message received on #{channel}: #{message}"
-      break if message == "start_laserbonnet"
 
       if message == "start_laserbonnet"
         blink
