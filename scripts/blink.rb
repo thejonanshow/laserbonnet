@@ -1,13 +1,7 @@
 begin
   require "redis"
 rescue LoadError => e
-  if e.message =~ /redis/
-    puts "#{e}: #{e.message}"
-    `gem install redis`
-    retry
-  else
-    raise e
-  end
+  `gem install redis`
 end
 
 def blink
