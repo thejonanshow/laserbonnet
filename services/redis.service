@@ -7,7 +7,7 @@ ExecStart=/usr/bin/redis-server /etc/redis/redis.conf
 RestartSec=5s
 Restart=on-success
 User=redis
-RuntimeDirectory=/var/run/redis
+RuntimeDirectory=redis
 RuntimeDirectoryMode=0775
 PermissionsStartOnly=true
 
