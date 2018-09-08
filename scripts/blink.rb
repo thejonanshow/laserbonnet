@@ -1,7 +1,10 @@
 begin
   require "redis"
 rescue LoadError => e
-  `gem install redis`
+  puts "We couldn't find redis"
+  puts "Trying to install it"
+  puts `gem install redis`
+  puts "Maybe it installed?"
 end
 
 def blink
@@ -13,21 +16,26 @@ end
 
 puts "Subscribing to redis..."
 
-Redis.new.subscribe("system") do |on|
-  on.subscribe do |channel, subscriptions|
-    puts "Subscribed to #{channel}"
-  end
+begin
+  Redis.new.subscribe("system") do |on|
+    on.subscribe do |channel, subscriptions|
+      puts "Subscribed to #{channel}"
+    end
 
-  on.message do |channel, message|
-    puts "Message received on #{channel}: #{message}"
+    on.message do |channel, message|
+      puts "Message received on #{channel}: #{message}"
 
-    if message == "start_laserbonnet"
-      blink
-      exit
+      if message == "start_laserbonnet"
+        blink
+        exit
+      end
+    end
+
+    on.unsubscribe do |channel, subscriptions|
+      puts "Unsubscribed from #{channel}"
     end
   end
-
-  on.unsubscribe do |channel, subscriptions|
-    puts "Unsubscribed from #{channel}"
-  end
+rescue => e
+  puts "It's broken"
+  puts e
 end
