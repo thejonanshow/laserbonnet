@@ -12,6 +12,8 @@ def blink
 end
 
 def laserbonnet_ready
+  puts "Subscribing to redis..."
+
   Redis.new.subscribe("system") do |on|
     on.subscribe do |channel, subscriptions|
       puts "Subscribed to #{channel}"
@@ -20,6 +22,11 @@ def laserbonnet_ready
     on.message do |channel, message|
       puts "Message received on #{channel}: #{message}"
       break if message == "start_laserbonnet"
+
+      if message == "start_laserbonnet"
+        blink
+        exit
+      end
     end
 
     on.unsubscribe do |channel, subscriptions|
@@ -27,10 +34,3 @@ def laserbonnet_ready
     end
   end
 end
-
-until (laserbonnet_ready)
-  puts "Waiting for laserbonnet to come online..."
-  sleep 1
-end
-
-blink
