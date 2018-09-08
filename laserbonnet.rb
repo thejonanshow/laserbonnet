@@ -7,7 +7,6 @@ require 'io/console'
 require 'fileutils'
 require 'socket'
 
-
 class LocalLogger
   def initialize
     FileUtils.mkdir_p "./logs"

@@ -1,6 +1,4 @@
-require "date"
-
-@start_secs = DateTime.parse(`date +"%b %d %T"`).to_time.to_i
+require "redis"
 
 def blink
   [1,0,1,0,1,0,1,0,1,0].each do |n|
@@ -10,16 +8,20 @@ def blink
 end
 
 def laserbonnet_ready
-  journalctl_output = `journalctl -u laserbonnet | tail -n 1`.chomp
+  Redis.new.subscribe("system") do |on|
+    on.subscribe do |channel, subscriptions|
+      puts "Subscribed to #{channel}"
+    end
 
-  month, day, time, _, _, *log_line = journalctl_output.split
-  log_line = log_line.join(" ")
+    on.message do |channel, message|
+      puts "Message received on #{channel}: #{message}"
+      break if message == "start_laserbonnet"
+    end
 
-  journal_secs = DateTime.parse("#{month} #{day} #{time}").to_time.to_i
-
-  expected_line = "Laserbonnet is listening..."
-
-  @start_secs <= journal_secs && log_line == expected_line
+    on.unsubscribe do |channel, subscriptions|
+      puts "Unsubscribed from #{channel}"
+    end
+  end
 end
 
 until (laserbonnet_ready)

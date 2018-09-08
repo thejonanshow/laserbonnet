@@ -1,7 +1,7 @@
 [Unit]
 Description=Blink
-After=network-online.target
-Wants=network-online.target
+After=network-online.target redis.service
+Wants=network-online.target redis.service
 
 [Service]
 Type=simple
