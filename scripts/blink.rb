@@ -2,9 +2,13 @@ begin
   require "redis"
 rescue LoadError => e
   puts "We couldn't find redis"
+  puts `gem list`
   puts "Trying to install it"
   puts `gem install redis`
   puts "Maybe it installed?"
+  puts `gem list`
+  puts `whoami`
+  puts `ruby -v`
 end
 
 def blink
