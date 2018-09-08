@@ -29,5 +29,6 @@ if [[ $? -eq 0 ]]; then
   git pull origin master
   echo "git pull complete"
 
+  /home/pi/src/laserbonnet/scripts/install_config.rb
   /home/pi/src/laserbonnet/scripts/install_services.rb
 fi
