@@ -7,6 +7,9 @@ ExecStart=/usr/bin/redis-server /etc/redis/redis.conf
 RestartSec=5s
 Restart=on-success
 User=redis
+RuntimeDirectory=/var/run/redis
+RuntimeDirectoryMode=0775
+PermissionsStartOnly=true
 
 [Install]
 WantedBy=multi-user.target
