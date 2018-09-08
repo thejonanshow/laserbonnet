@@ -1,7 +1,7 @@
 begin
   require "redis"
 rescue LoadError => e
-  if e =~ /redis/
+  if e.message =~ /redis/
     puts "#{e}: #{e.message}"
     `gem install redis`
     retry
