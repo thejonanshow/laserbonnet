@@ -1,4 +1,12 @@
-require "redis"
+begin
+  require "redis"
+rescue LoadError => e
+  if e =~ /redis/
+    puts "#{e}: #{e.message}"
+    `gem install redis`
+    retry
+  end
+end
 
 def blink
   [1,0,1,0,1,0,1,0,1,0].each do |n|
