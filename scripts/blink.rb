@@ -5,6 +5,8 @@ rescue LoadError => e
     puts "#{e}: #{e.message}"
     `gem install redis`
     retry
+  else
+    raise e
   end
 end
 
