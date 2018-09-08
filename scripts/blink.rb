@@ -1,5 +1,5 @@
 begin
-  require "redis"
+  require "/home/pi/.gem/ruby/2.5.1/gems/redis-4.0.2/lib/redis"
 rescue LoadError => e
   puts "We couldn't find redis"
   puts `gem list`
