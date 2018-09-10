@@ -96,7 +96,7 @@ class Laserbonnet
   end
 
   def send(command)
-    redis.publish(ENV['CHANNEL'], { id: @id, command: command }.to_json)
+    redis.publish(ENV['REDIS_CHANNEL'], { id: @id, command: command }.to_json)
   rescue => e
     @log_queue << {
       id: @id,
