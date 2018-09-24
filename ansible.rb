@@ -57,7 +57,7 @@ class Ansible
       command: 'subscribe',
       identifier: {
         channel: channel
-      },
+      }.to_json,
       data: {
         id: @id
       }.to_json
