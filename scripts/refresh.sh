@@ -26,7 +26,7 @@ if [[ $? -eq 0 ]]; then
   echo "network is online"
 
   cd /home/pi/src/laserbonnet
-  git pull origin master
+  git pull origin ansible
   echo "git pull complete"
 
   /home/pi/src/laserbonnet/scripts/install_config.rb
