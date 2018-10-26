@@ -17,7 +17,13 @@ import sys
 import socket
 import atexit
 from datetime import datetime
+from subprocess import call
+import thread
 
+try:
+    import httplib
+except:
+    import http.client as httplib
 try:
     import RPi.GPIO as gpio
 except ImportError:
@@ -48,6 +54,16 @@ BUTTONS  = [BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y, SELECT, START, PLAYER1, PLAY
 ANALOG_THRESH_NEG = -600
 ANALOG_THRESH_POS = 600
 analog_states = [False, False, False, False]  # up down left right
+button_states = {
+        BUTTON_A: False,
+        BUTTON_B: False,
+        BUTTON_X: False,
+        BUTTON_Y: False,
+        SELECT:   False,
+        START:    False,
+        PLAYER1:  False,
+        PLAYER2:  False
+}
 
 KEY_PRESS = {
         BUTTON_A: 'a',
@@ -104,6 +120,98 @@ ADS1015_REG_CONFIG_OS_SINGLE    = 0x8000 # start a single conversion
 ADS1015_REG_CONFIG_CHANNELS = (ADS1015_REG_CONFIG_MUX_SINGLE_0, ADS1015_REG_CONFIG_MUX_SINGLE_1,
 			       ADS1015_REG_CONFIG_MUX_SINGLE_2, ADS1015_REG_CONFIG_MUX_SINGLE_3)
 
+BLINK_NO_INTERNET = '...---...'
+BLINK_ON = 'Y'
+BLINK_OFF = 'N'
+current_blink = BLINK_ON
+led_is_on = 'X'
+
+def log(msg):
+    sys.stdout.write(str(datetime.now()))
+    sys.stdout.write(": ")
+    sys.stdout.write(msg)
+    sys.stdout.write("\n")
+    sys.stdout.flush()
+
+def led_on():
+    global led_is_on
+    if led_is_on != True:
+        os.system('echo 0 > /sys/class/leds/led0/brightness')
+        led_is_on = True
+
+def led_off():
+    global led_is_on
+    if led_is_on != False:
+       os.system('echo 1 > /sys/class/leds/led0/brightness')
+       led_is_on = False
+
+def blink_dot():
+    led_off()
+    time.sleep(.1)
+    led_on()
+    time.sleep(.1)
+    led_off()
+
+def blink_dash():
+    led_off()
+    time.sleep(.1)
+    led_on()
+    time.sleep(.5)
+    led_off()
+
+def blink_long():
+    led_off()
+    time.sleep(.1)
+    led_on()
+    time.sleep(5)
+    led_off()
+
+def blink_run():
+    global current_blink
+    while True:
+        log('run blink ' + current_blink)
+        for c in current_blink:
+            if c == '.':
+                blink_dot()
+            elif c == '-':
+                blink_dash()
+            elif c == 'Y':
+                blink_long()
+            elif c == 'N':
+                led_off()
+                time.sleep(5)
+        time.sleep(1)
+
+def have_internet():
+    conn = httplib.HTTPConnection("www.google.com", timeout=5)
+    try:
+        conn.request("HEAD", "/")
+        conn.close()
+        log('internet is up')
+        return True
+    except:
+        conn.close()
+        log('Internet is down')
+        return False
+
+def check_internet():
+    global current_blink
+    os.system("echo none > /sys/class/leds/led0/trigger")
+    while True:
+        try:
+            internet = have_internet()
+        except:
+            internet = False
+        if not internet:
+            current_blink = BLINK_NO_INTERNET
+        else:
+            current_blink = BLINK_ON
+        time.sleep(30)
+
+
+thread.start_new_thread(check_internet, ())
+thread.start_new_thread(blink_run, ())
+
 def ads_read(channel):
   #configdata = bus.read_i2c_block_data(ADS1x15_DEFAULT_ADDRESS, ADS1x15_POINTER_CONFIG, 2) 
   #print("Getting config byte = 0x%02X%02X" % (configdata[0], configdata[1]))
@@ -124,6 +232,7 @@ def ads_read(channel):
        if (configdata[0] & 0x80):
          break
      except:
+       print("cannot read block")
        pass
   # read data out!
   analogdata = bus.read_i2c_block_data(ADS1x15_DEFAULT_ADDRESS, ADS1x15_POINTER_CONVERSION, 2)
@@ -139,6 +248,7 @@ bus     = SMBus(1)
 HOST = 'localhost'
 PORT = 31879
 SERVER = socket.socket()
+SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 SERVER.bind((HOST, PORT))
 SERVER.listen(10)
 
@@ -147,22 +257,22 @@ gpio.setwarnings(False)
 gpio.setmode(gpio.BCM)
 gpio.setup(BUTTONS, gpio.IN, pull_up_down=gpio.PUD_UP)
 
-def log(msg):
-    sys.stdout.write(str(datetime.now()))
-    sys.stdout.write(": ")
-    sys.stdout.write(msg)
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+
+log("joybonnet starting...");
 
 laserbonnet = None
 def send_sock(msg):
     global laserbonnet
 
-    if laserbonnet is None:
-        laserbonnet, addr = SERVER.accept()
-        print "assigned laserbonnet: " + str(addr)
+    try:
+        if laserbonnet is None:
+            laserbonnet, addr = SERVER.accept()
+            print "assigned laserbonnet: " + str(addr)
 
-    laserbonnet.send(msg.encode('ascii'))
+        laserbonnet.send(msg.encode('ascii'))
+    except:
+        log("could not send" + msg.encode('ascii'))
+        pass
 
 def close_sock():
     SERVER.close()
@@ -177,9 +287,20 @@ def handle_button(pin):
       state = 0 if gpio.input(pin) else 1
 
     if state:
+        button_states[pin] = True
         send_sock(KEY_PRESS[pin])
     else:
+        button_states[pin] = False
         send_sock(KEY_RELEASE[pin])
+
+    log(repr(button_states))
+
+    if button_states[BUTTON_A] and button_states[START]:
+        log("restarting")
+        call(["shutdown", "-r", "now"])
+    if button_states[BUTTON_B] and button_states[START]:
+        log("shutting down")
+        call(["shutdown", "-h", "now"])
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
@@ -192,6 +313,7 @@ while True:
     y = 800 - ads_read(0)
     x = ads_read(1) - 800
   except IOError:
+    print("ioerror ads_read")
     continue
   #print("(%d , %d)" % (x, y))
 
