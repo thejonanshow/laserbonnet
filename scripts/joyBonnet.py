@@ -261,15 +261,24 @@ gpio.setup(BUTTONS, gpio.IN, pull_up_down=gpio.PUD_UP)
 log("joybonnet starting...");
 
 laserbonnet = None
+
+def accept_connection():
+    global laserbonnet, addr
+    while True:
+        laserbonnet, addr = SERVER.accept()
+        print "assigned laserbonnet: " + str(addr)
+
+thread.start_new_thread(accept_connection, ())
+
 def send_sock(msg):
     global laserbonnet
 
     try:
-        if laserbonnet is None:
-            laserbonnet, addr = SERVER.accept()
-            print "assigned laserbonnet: " + str(addr)
+        if laserbonnet is not None:
+            laserbonnet.send(msg.encode('ascii'))
+            log("sending msg")
+            #laserbonnet, addr = SERVER.accept()
 
-        laserbonnet.send(msg.encode('ascii'))
     except:
         log("could not send" + msg.encode('ascii'))
         pass
@@ -292,8 +301,6 @@ def handle_button(pin):
     else:
         button_states[pin] = False
         send_sock(KEY_RELEASE[pin])
-
-    log(repr(button_states))
 
     if button_states[BUTTON_A] and button_states[START]:
         log("restarting")

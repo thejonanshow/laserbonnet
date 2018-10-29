@@ -25,10 +25,16 @@ retry wget -q --tries=10 --timeout=20 --spider http://google.com
 if [[ $? -eq 0 ]]; then
   echo "network is online"
 
+  changed=0
   cd /home/pi/src/laserbonnet
-  git pull origin ansible
+  git pull origin ansible --dry-run | grep -q -v 'Already up-to-date.' && changed=1
   echo "git pull complete"
-
-  /home/pi/src/laserbonnet/scripts/install_config.rb
-  /home/pi/src/laserbonnet/scripts/install_services.rb
+  if [ "$changed" == "1" ]; then
+    echo "repo changes, updating..."
+    git pull origin ansible
+	/home/pi/src/laserbonnet/scripts/install_config.rb
+	/home/pi/src/laserbonnet/scripts/install_services.rb
+  else
+    echo "no repo changes, skipping update"
+  fi
 fi
