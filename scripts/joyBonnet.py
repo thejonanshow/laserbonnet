@@ -19,6 +19,7 @@ import atexit
 from datetime import datetime
 from subprocess import call
 import thread
+import yaml
 
 try:
     import httplib
@@ -33,6 +34,10 @@ try:
      from smbus import SMBus
 except ImportError:
     exit("This library requires the smbus module\nInstall with: sudo pip install smbus")
+
+config_path = os.path.join(os.path.dirname(__file__), "..", "config", "production.yaml")
+with open(config_path) as yaml_stream:
+    config = yaml.safe_load(yaml_stream)
 
 DEBUG = False
 BOUNCE_TIME = 0.01 # Debounce time in seconds
@@ -120,11 +125,13 @@ ADS1015_REG_CONFIG_OS_SINGLE    = 0x8000 # start a single conversion
 ADS1015_REG_CONFIG_CHANNELS = (ADS1015_REG_CONFIG_MUX_SINGLE_0, ADS1015_REG_CONFIG_MUX_SINGLE_1,
 			       ADS1015_REG_CONFIG_MUX_SINGLE_2, ADS1015_REG_CONFIG_MUX_SINGLE_3)
 
-BLINK_NO_INTERNET = '...---...'
+BLINK_SOS = '... --- ...'
 BLINK_ON = 'Y'
 BLINK_OFF = 'N'
+BLINK_REDIS = ".-. -.. ..."
 current_blink = BLINK_ON
 led_is_on = 'X'
+BLINK_FAST = '........'
 
 def log(msg):
     sys.stdout.write(str(datetime.now()))
@@ -156,20 +163,17 @@ def blink_dash():
     led_off()
     time.sleep(.1)
     led_on()
-    time.sleep(.5)
+    time.sleep(.3)
     led_off()
 
 def blink_long():
-    led_off()
-    time.sleep(.1)
     led_on()
-    time.sleep(5)
+    time.sleep(1)
     led_off()
 
 def blink_run():
     global current_blink
     while True:
-        log('run blink ' + current_blink)
         for c in current_blink:
             if c == '.':
                 blink_dot()
@@ -177,13 +181,17 @@ def blink_run():
                 blink_dash()
             elif c == 'Y':
                 blink_long()
+            elif c == ' ':
+                led_off()
+                time.sleep(.2)
             elif c == 'N':
                 led_off()
                 time.sleep(5)
         time.sleep(1)
 
 def have_internet():
-    conn = httplib.HTTPConnection("www.google.com", timeout=5)
+    global config
+    conn = httplib.HTTPConnection(config['internet_check'], timeout=5)
     try:
         conn.request("HEAD", "/")
         conn.close()
@@ -194,6 +202,17 @@ def have_internet():
         log('Internet is down')
         return False
 
+def check_connection(process, service, host=False):
+    cmd = "lsof -i -n | grep " + process + " | grep ESTABLISHED | "
+    if host:
+        cmd += "grep \"" + host + ":" + service + "\""
+    else:
+        cmd += "grep \":" + service + "\""
+    connected = os.system(cmd)
+    connected = not bool(os.WEXITSTATUS(connected))
+    log("checked service: " + cmd + " :: " + str(connected))
+    return connected
+
 def check_internet():
     global current_blink
     os.system("echo none > /sys/class/leds/led0/trigger")
@@ -203,10 +222,12 @@ def check_internet():
         except:
             internet = False
         if not internet:
-            current_blink = BLINK_NO_INTERNET
+            current_blink = BLINK_SOS
+        elif not check_connection("ruby", "http"):
+            current_blink = BLINK_FAST
         else:
             current_blink = BLINK_ON
-        time.sleep(30)
+        time.sleep(10)
 
 
 thread.start_new_thread(check_internet, ())
@@ -277,7 +298,6 @@ def send_sock(msg):
         if laserbonnet is not None:
             laserbonnet.send(msg.encode('ascii'))
             log("sending msg")
-            #laserbonnet, addr = SERVER.accept()
 
     except:
         log("could not send" + msg.encode('ascii'))

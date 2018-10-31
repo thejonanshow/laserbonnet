@@ -1,0 +1,9 @@
+websocket: wss://spaceblazer.cloud/cable
+internet_check: www.heroku.com
+
+joy:
+  port: 31879
+
+redis:
+  url: redis://user:pass@server:6789
+  channel: laserbonnet

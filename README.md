@@ -11,6 +11,8 @@ START + B: Proper Shutdown
 
 The LED will blink for disk access as it starts up.
 
-5 seconds on, 1 second off: Normal operation.
+1 second on, one second off: Normal operation.
 
 Morse code SOS ...---...: No Internet connection.
+
+Fast Blink: Not connected to game websocket

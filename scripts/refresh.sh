@@ -27,7 +27,7 @@ if [[ $? -eq 0 ]]; then
 
   changed=0
   cd /home/pi/src/laserbonnet
-  git pull origin ansible --dry-run | grep -q -v 'Already up-to-date.' && changed=1
+  git pull origin master --dry-run | grep -q -v 'Already up-to-date.' && changed=1
   echo "git pull complete"
   if [ "$changed" == "1" ]; then
     echo "repo changes, updating..."

@@ -8,13 +8,14 @@ require './web_socket_client'
 class Ansible
   attr_reader :id, :ip, :url, :websocket, :publisher, :connection, :redis
 
-  def initialize(id:, url: 'ws://localhost:3000/cable', redis: nil, channel: ENV['REDIS_CHANNEL'])
+  def initialize(id:, url: 'ws://localhost:3000/cable', redis: nil, channel: ENV['REDIS_CHANNEL'], logger: nil)
     @id = id
     @url = url
     @ip = get_ip
     @redis = redis || Redis.new(url: ENV['REDIS_URL'])
     @channel = channel
     @ready = false
+    @logger = logger
 
     Thread.report_on_exception = true
 
@@ -23,6 +24,13 @@ class Ansible
     @outbound_queue = Queue.new
     @websocket = spawn_websocket(@connection, @inbound_queue, @outbound_queue)
     @publisher = spawn_publisher(@inbound_queue, @websocket)
+  end
+
+  def log(msg)
+    if @logger =~ nil
+      @logger.puts msg
+    end
+    puts msg
   end
 
   def kill
@@ -94,13 +102,9 @@ class Ansible
   def spawn_publisher(inbound_queue, websocket)
     Thread.new do
       loop do
-        sleep 0.01
-
-        unless inbound_queue.empty?
-          frame = inbound_queue.shift
-          parsed = JSON.parse(frame.data)
-          websocket[:ready] = true if parsed["type"] == "confirm_subscription"
-        end
+        frame = inbound_queue.shift
+        parsed = JSON.parse(frame.data)
+        websocket[:ready] = true if parsed["type"] == "confirm_subscription"
       end
     end
   end
@@ -128,10 +132,9 @@ class Ansible
 
       loop do
         next unless @websocket[:ready]
-
-        unless outbound_queue.empty?
-          connection.send outbound_queue.shift
-        end
+        msg = outbound_queue.shift
+        log "outbound: #{msg}"
+        connection.send msg
       end
     end
   end

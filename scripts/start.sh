@@ -4,11 +4,18 @@ chruby 2.5.1
 echo "changed ruby with chruby"
 echo "using $(ruby -v)"
 
-bundle install
+changed=0
+cd /home/pi/src/laserbonnet
+git pull origin master --dry-run | grep -q -v 'Already up-to-date.' && changed=1
 
-gpg --batch --yes -r Astro -o /home/pi/src/laserbonnet/.env -d /home/pi/src/laserbonnet/.env.enc
-echo "updated .env"
+echo "git pull complete"
+if [ "$changed" == "1" ]; then
+  bundle install
 
+  gpg --batch --yes -r Astro -o /home/pi/src/laserbonnet/.env -d /home/pi/src/laserbonnet/.env.enc
+  gpg --batch --yes -r Astro -o /home/pi/src/laserbonnet/config/production.yaml -d /home/pi/src/laserbonnet/config/production.yaml.enc
+  echo "updated .env"
+fi
 echo "starting laserbonnet"
 ruby /home/pi/src/laserbonnet/start_laserbonnet.rb
 echo "laserbonnet stopped"

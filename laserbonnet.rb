@@ -5,9 +5,12 @@ Dotenv.load
 require 'thread'
 require 'io/console'
 require 'socket'
+require 'yaml'
 require './local_logger'
 require './laser_logger'
 require './ansible'
+
+$stdout.sync = true
 
 class Laserbonnet
   attr_reader :redis
@@ -26,6 +29,7 @@ class Laserbonnet
     @local_log = LocalLogger.new
     @local_log.puts "Initializing Laserbonnet"
     @remote_log = LaserLogger.new(@local_log)
+    @config = YAML::load_file(File.join(__dir__, 'config', 'production.yaml'))
 
     @id = get_id
     @log_queue = Queue.new
@@ -36,23 +40,20 @@ class Laserbonnet
     else
       @env = 'production'
     end
+    redis_url = @config["redis"]["url"]
+    websocket_url = @config["websocket"]
 
     if @env == 'development'
       puts 'Starting in development mode...'
-      redis_url = 'redis://localhost:6379'
-      websocket_url = 'ws://localhost:3000/cable'
-      puts redis_url
-      puts websocket_url
       @joy = nil
     else
-      redis_url = ENV['REDIS_URL']
       websocket_url = 'wss://spaceblazer.cloud/cable'
       @joy = TCPSocket.open('localhost', 31879)
     end
 
     @redis = Redis.new(url: redis_url)
-    @channel = ENV['REDIS_CHANNEL']
-    @ansible = Ansible.new(id: @id, url: websocket_url, redis: @redis, channel: @channel)
+    @channel = @config["redis"]["channel"]
+    @ansible = Ansible.new(id: @id, url: websocket_url, redis: @redis, channel: @channel, logger: @local_log)
 
     start_remote_log
 
@@ -73,22 +74,18 @@ class Laserbonnet
 
     Thread.new do
       loop do
-        unless @log_queue.empty?
-          message = @log_queue.shift
-
-          @remote_log.log(
-            id: message[:id],
-            line: message[:line],
-            level: message[:level]
-          )
-        end
-
-        sleep 0.1
+        message = @log_queue.shift
+        @remote_log.log(
+          id: message[:id],
+          line: message[:line],
+          level: message[:level]
+        )
       end
     end
   end
 
   def send(command)
+    @local_log.puts "sending #{command}"
     @ansible.send_command(command)
   rescue => e
     handle_error(e)
