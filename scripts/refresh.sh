@@ -31,7 +31,7 @@ if [[ $? -eq 0 ]]; then
   echo "git pull complete"
   if [ "$changed" == "1" ]; then
     echo "repo changes, updating..."
-    git pull origin ansible
+    git pull origin master
 	/home/pi/src/laserbonnet/scripts/install_config.rb
 	/home/pi/src/laserbonnet/scripts/install_services.rb
   else
