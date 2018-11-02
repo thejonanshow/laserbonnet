@@ -1,8 +1,11 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    binding_of_caller (0.8.0)
+      debug_inspector (>= 0.0.1)
     byebug (10.0.2)
     coderay (1.1.2)
+    debug_inspector (0.0.3)
     dotenv (2.5.0)
     event_emitter (0.2.6)
     faraday (0.11.0)
@@ -25,6 +28,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  binding_of_caller
   dotenv
   event_emitter
   faraday

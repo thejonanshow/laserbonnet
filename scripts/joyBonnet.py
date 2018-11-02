@@ -132,6 +132,7 @@ BLINK_REDIS = ".-. -.. ..."
 current_blink = BLINK_ON
 led_is_on = 'X'
 BLINK_FAST = '........'
+websocket_connected = False
 
 def log(msg):
     sys.stdout.write(str(datetime.now()))
@@ -214,19 +215,26 @@ def check_connection(process, service, host=False):
     return connected
 
 def check_internet():
-    global current_blink
+    global current_blink, websocket_connected
     os.system("echo none > /sys/class/leds/led0/trigger")
     while True:
         try:
             internet = have_internet()
         except:
             internet = False
+        websocket_check = check_connection("ruby", "http")
         if not internet:
             current_blink = BLINK_SOS
-        elif not check_connection("ruby", "http"):
+        elif not websocket_check:
             current_blink = BLINK_FAST
         else:
             current_blink = BLINK_ON
+
+        if websocket_check:
+            websocket_connected = True
+        if websocket_connected and not websocket_check:
+            websocket_connected = False
+            os.system("service laserbonnet restart")
         time.sleep(10)
 
 
@@ -328,6 +336,10 @@ def handle_button(pin):
     if button_states[BUTTON_B] and button_states[START]:
         log("shutting down")
         call(["shutdown", "-h", "now"])
+    if button_states[BUTTON_A] and button_states[SELECT]:
+        log("copying logs")
+        call(["mkdir", "-p", "/boot/logs"])
+        os.system("cp /home/pi/src/laserbonnet/logs/* /boot/logs/")
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))

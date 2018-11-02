@@ -1,12 +1,14 @@
 require 'fileutils'
 
 class LocalLogger
-  def initialize
+  def initialize(config)
+    @config = config
     FileUtils.mkdir_p "./logs"
     @file = File.open("./logs/laserbonnet.log", "a+")
   end
 
-  def puts(line)
+  def log(line)
     @file.puts "#{Time.now} - #{line}"
+    puts line
   end
 end

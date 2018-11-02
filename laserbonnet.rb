@@ -26,12 +26,12 @@ class Laserbonnet
     return unless start
 
     @env = `uname`.strip
-    @local_log = LocalLogger.new
-    @local_log.puts "Initializing Laserbonnet"
-    @remote_log = LaserLogger.new(@local_log)
     @config = YAML::load_file(File.join(__dir__, 'config', 'production.yaml'))
-
+    @local_log = LocalLogger.new(@config)
+    @local_log.log "Initializing Laserbonnet"
     @id = get_id
+    @remote_log = LaserLogger.new(@local_log, @id, @config)
+
     @log_queue = Queue.new
 
     uname = `uname`.strip
@@ -53,15 +53,19 @@ class Laserbonnet
 
     @redis = Redis.new(url: redis_url)
     @channel = @config["redis"]["channel"]
-    @ansible = Ansible.new(id: @id, url: websocket_url, redis: @redis, channel: @channel, logger: @local_log)
 
-    start_remote_log
+    #start_remote_log
+    #
+    @remote_log.log("info", "online")
 
-    @log_queue << {
-      id: @id,
-      level: "info",
-      line: "online"
-    }
+    #@log_queue << {
+    #  id: @id,
+    #  level: "info",
+    #  line: "online"
+    #}
+
+    @ansible = Ansible.new(id: @id, url: websocket_url, redis: @redis, channel: @channel, remote_log: @remote_log)
+
 
     @ansible.send_passport
     send("online")
@@ -70,7 +74,7 @@ class Laserbonnet
   end
 
   def start_remote_log
-    @local_log.puts "Starting remote log"
+    @local_log.log "Starting remote log"
 
     Thread.new do
       loop do
@@ -85,7 +89,7 @@ class Laserbonnet
   end
 
   def send(command)
-    @local_log.puts "sending #{command}"
+    @local_log.log "sending #{command}"
     @ansible.send_command(command)
   rescue => e
     handle_error(e)
@@ -194,7 +198,7 @@ class Laserbonnet
   end
 
   def listen
-    @local_log.puts "Listening..."
+    @local_log.log "Listening..."
 
     while char = get_char
       char = check_combo(char)
@@ -203,7 +207,7 @@ class Laserbonnet
       send_command(char)
     end
 
-    @local_log.puts "Stopped listening..."
+    @local_log.log "Stopped listening..."
   rescue => e
     handle_error(e)
   end
@@ -225,6 +229,6 @@ class Laserbonnet
       level: "error",
       line: log_line
     }
-    @local_log.puts log_line
+    @local_log.log log_line
   end
 end
