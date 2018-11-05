@@ -1,0 +1,18 @@
+websocket: wss://spaceblazer.cloud/cable
+internet_check: www.heroku.com
+
+joy:
+  port: 31879
+
+redis:
+  url: redis://user:password@host:port
+  channel: laserbonnet
+
+logblazer:
+  url: http://somewhere.com
+  key: "asdflkjasfdklj"
+  version: "1.0.0"
+
+wifi:
+  -  ssid: "Comforts of Home"
+     psk: "Guest2018"

@@ -5,9 +5,12 @@ Dotenv.load
 require 'thread'
 require 'io/console'
 require 'socket'
+require 'yaml'
 require './local_logger'
 require './laser_logger'
 require './ansible'
+
+$stdout.sync = true
 
 class Laserbonnet
   attr_reader :redis
@@ -23,11 +26,12 @@ class Laserbonnet
     return unless start
 
     @env = `uname`.strip
-    @local_log = LocalLogger.new
-    @local_log.puts "Initializing Laserbonnet"
-    @remote_log = LaserLogger.new(@local_log)
-
+    @config = YAML::load_file(File.join(__dir__, 'config', 'production.yaml'))
+    @local_log = LocalLogger.new(@config)
+    @local_log.log "Initializing Laserbonnet"
     @id = get_id
+    @remote_log = LaserLogger.new(@local_log, @id, @config)
+
     @log_queue = Queue.new
 
     uname = `uname`.strip
@@ -36,31 +40,31 @@ class Laserbonnet
     else
       @env = 'production'
     end
+    redis_url = @config["redis"]["url"]
+    websocket_url = @config["websocket"]
 
     if @env == 'development'
       puts 'Starting in development mode...'
-      redis_url = 'redis://localhost:6379'
-      websocket_url = 'ws://localhost:3000/cable'
-      puts redis_url
-      puts websocket_url
-      @joy = nil
     else
-      redis_url = ENV['REDIS_URL']
       websocket_url = 'wss://spaceblazer.cloud/cable'
-      @joy = TCPSocket.open('localhost', 31879)
     end
 
     @redis = Redis.new(url: redis_url)
-    @channel = ENV['REDIS_CHANNEL']
-    @ansible = Ansible.new(id: @id, url: websocket_url, redis: @redis, channel: @channel)
+    @redis_ipc = Redis.new(url: 'redis://localhost:6379')
+    @channel = @config["redis"]["channel"]
 
-    start_remote_log
+    #start_remote_log
+    #
+    @remote_log.log("info", "online")
 
-    @log_queue << {
-      id: @id,
-      level: "info",
-      line: "online"
-    }
+    #@log_queue << {
+    #  id: @id,
+    #  level: "info",
+    #  line: "online"
+    #}
+
+    @ansible = Ansible.new(id: @id, url: websocket_url, redis: @redis, channel: @channel, remote_log: @remote_log)
+
 
     @ansible.send_passport
     send("online")
@@ -68,22 +72,29 @@ class Laserbonnet
     handle_error(e)
   end
 
+  def listen
+    @redis_ipc.subscribe('key_state') do |on|
+      on.message do |channel, msg|
+        puts "#{channel} #{msg}"
+        msg = check_combo(msg)
+        next if duplicate? msg
+        break if msg =~ /(q|\u0003)/i
+        send_command(msg)
+      end
+    end
+  end
+
   def start_remote_log
-    @local_log.puts "Starting remote log"
+    @local_log.log "Starting remote log"
 
     Thread.new do
       loop do
-        unless @log_queue.empty?
-          message = @log_queue.shift
-
-          @remote_log.log(
-            id: message[:id],
-            line: message[:line],
-            level: message[:level]
-          )
-        end
-
-        sleep 0.1
+        message = @log_queue.shift
+        @remote_log.log(
+          id: message[:id],
+          line: message[:line],
+          level: message[:level]
+        )
       end
     end
   end
@@ -106,44 +117,6 @@ class Laserbonnet
     else
       "unknown_serial"
     end
-  end
-
-  def get_char
-    if @env == 'development'
-      char = STDIN.getch.chomp
-
-      if char == 'w'
-        char = 'u'
-      elsif char == 'a'
-        char = 'l'
-      elsif char == 's'
-        char = 'd'
-      elsif char == 'd'
-        char = 'r'
-      elsif char == ' '
-        char = 'b'
-      elsif char =~ /(q|\u0003)|\e/i
-        char = 'q'
-      elsif char == ''
-        char = 's'
-      elsif char == '1'
-        char = '1'
-      elsif char == '2'
-        char = '2'
-      elsif char == 't'
-        char = 't'
-      elsif char == 'b'
-        char = 'b'
-      elsif char == 'z'
-        char = 'a'
-      else
-        char = ''
-      end
-    else
-      char = @joy.getc
-    end
-
-    char
   end
 
   def duplicate?(char)
@@ -196,21 +169,6 @@ class Laserbonnet
     char
   end
 
-  def listen
-    @local_log.puts "Listening..."
-
-    while char = get_char
-      char = check_combo(char)
-      next if duplicate? char
-      break if char =~ /(q|\u0003)/i
-      send_command(char)
-    end
-
-    @local_log.puts "Stopped listening..."
-  rescue => e
-    handle_error(e)
-  end
-
   def send_command(char)
     return unless char =~ CHARACTER_WHITELIST
     send(char)
@@ -228,6 +186,6 @@ class Laserbonnet
       level: "error",
       line: log_line
     }
-    @local_log.puts log_line
+    @local_log.log log_line
   end
 end

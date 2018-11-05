@@ -5,7 +5,8 @@ require 'fileutils'
 config_dir = File.join(File.expand_path('../', __dir__), 'config')
 
 DESTINATIONS = {
-  redis: "/etc/redis"
+  redis: "/etc/redis",
+  laserbonnet_rotate: "/etc/logrotate.d"
 }
 
 DESTINATIONS.each do |config, directory|
@@ -14,12 +15,15 @@ DESTINATIONS.each do |config, directory|
   end
 end
 
-Dir.glob("#{config_dir}/*.*").each do |config_file|
+Dir.glob("#{config_dir}/*").each do |config_file|
   config_name = config_file.split("/").last.split(".").first
+  puts config_name
 
-  destination = DESTINATIONS[config_name.to_sym]
-  puts "Copying #{config_file} to #{destination}..."
-  FileUtils.cp config_file, destination
+  if DESTINATIONS.key?(config_name.to_sym) then
+    destination = DESTINATIONS[config_name.to_sym]
+    puts "Copying #{config_file} to #{destination}..."
+    FileUtils.cp config_file, destination
+  end
 end
 
 puts "Config installation complete"

@@ -4,19 +4,22 @@ require 'json'
 require 'socket'
 require 'openssl'
 require './web_socket_client'
+require 'binding_of_caller'
 
 class Ansible
   attr_reader :id, :ip, :url, :websocket, :publisher, :connection, :redis
 
-  def initialize(id:, url: 'ws://localhost:3000/cable', redis: nil, channel: ENV['REDIS_CHANNEL'])
+  def initialize(id:, url: 'ws://localhost:3000/cable', redis: nil, channel: ENV['REDIS_CHANNEL'], remote_log: nil)
     @id = id
     @url = url
     @ip = get_ip
     @redis = redis || Redis.new(url: ENV['REDIS_URL'])
     @channel = channel
     @ready = false
+    @debug = false
+    @remote_log = remote_log
 
-    Thread.report_on_exception = true
+    #Thread.report_on_exception = true
 
     @connection = websocket_connection
     @inbound_queue = Queue.new
@@ -26,6 +29,7 @@ class Ansible
   end
 
   def kill
+    @remote_log.log("info", "killed")
     @connection.close
     @websocket.kill
     @publisher.kill
@@ -94,22 +98,24 @@ class Ansible
   def spawn_publisher(inbound_queue, websocket)
     Thread.new do
       loop do
-        sleep 0.01
-
-        unless inbound_queue.empty?
-          frame = inbound_queue.shift
-          parsed = JSON.parse(frame.data)
-          websocket[:ready] = true if parsed["type"] == "confirm_subscription"
+        frame = inbound_queue.shift
+        parsed = JSON.parse(frame.data)
+        if parsed["type"] == "start_debug" then
+          @debug = true
         end
+        websocket[:ready] = true if parsed["type"] == "confirm_subscription"
       end
     end
   end
 
   def spawn_websocket(connection, inbound_queue, outbound_queue)
     subscribe = subscription_data
+    remote_log = @remote_log
+    remote_log.log("info", "connecting to websocket")
 
     Thread.new do
       connection.on :open do
+        remote_log.log("info", "connected to websocket")
         connection.send subscribe
       end
 
@@ -119,7 +125,7 @@ class Ansible
 
       connection.on :close do |e|
         p e
-        exit 1
+        remote_log.log("info", "disconnected from websocket")
       end
 
       connection.on :error do |e|
@@ -128,10 +134,11 @@ class Ansible
 
       loop do
         next unless @websocket[:ready]
-
-        unless outbound_queue.empty?
-          connection.send outbound_queue.shift
+        msg = outbound_queue.shift
+        if @debug then
+          @remote_log.log("debug", msg)
         end
+        connection.send msg
       end
     end
   end

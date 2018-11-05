@@ -17,7 +17,15 @@ import sys
 import socket
 import atexit
 from datetime import datetime
+from subprocess import call
+import thread
+import yaml
+import redis
 
+try:
+    import httplib
+except:
+    import http.client as httplib
 try:
     import RPi.GPIO as gpio
 except ImportError:
@@ -27,6 +35,10 @@ try:
      from smbus import SMBus
 except ImportError:
     exit("This library requires the smbus module\nInstall with: sudo pip install smbus")
+
+config_path = os.path.join(os.path.dirname(__file__), "..", "config", "production.yaml")
+with open(config_path) as yaml_stream:
+    config = yaml.safe_load(yaml_stream)
 
 DEBUG = False
 BOUNCE_TIME = 0.01 # Debounce time in seconds
@@ -48,6 +60,16 @@ BUTTONS  = [BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y, SELECT, START, PLAYER1, PLAY
 ANALOG_THRESH_NEG = -600
 ANALOG_THRESH_POS = 600
 analog_states = [False, False, False, False]  # up down left right
+button_states = {
+        BUTTON_A: False,
+        BUTTON_B: False,
+        BUTTON_X: False,
+        BUTTON_Y: False,
+        SELECT:   False,
+        START:    False,
+        PLAYER1:  False,
+        PLAYER2:  False
+}
 
 KEY_PRESS = {
         BUTTON_A: 'a',
@@ -104,6 +126,124 @@ ADS1015_REG_CONFIG_OS_SINGLE    = 0x8000 # start a single conversion
 ADS1015_REG_CONFIG_CHANNELS = (ADS1015_REG_CONFIG_MUX_SINGLE_0, ADS1015_REG_CONFIG_MUX_SINGLE_1,
 			       ADS1015_REG_CONFIG_MUX_SINGLE_2, ADS1015_REG_CONFIG_MUX_SINGLE_3)
 
+BLINK_SOS = '... --- ...'
+BLINK_ON = 'Y'
+BLINK_OFF = 'N'
+BLINK_REDIS = ".-. -.. ..."
+current_blink = BLINK_ON
+led_is_on = 'X'
+BLINK_FAST = '........'
+websocket_connected = False
+
+def log(msg):
+    sys.stdout.write(str(datetime.now()))
+    sys.stdout.write(": ")
+    sys.stdout.write(msg)
+    sys.stdout.write("\n")
+    sys.stdout.flush()
+
+def led_on():
+    global led_is_on
+    if led_is_on != True:
+        os.system('echo 0 > /sys/class/leds/led0/brightness')
+        led_is_on = True
+
+def led_off():
+    global led_is_on
+    if led_is_on != False:
+       os.system('echo 1 > /sys/class/leds/led0/brightness')
+       led_is_on = False
+
+def blink_dot():
+    led_off()
+    time.sleep(.1)
+    led_on()
+    time.sleep(.1)
+    led_off()
+
+def blink_dash():
+    led_off()
+    time.sleep(.1)
+    led_on()
+    time.sleep(.3)
+    led_off()
+
+def blink_long():
+    led_on()
+    time.sleep(1)
+    led_off()
+
+def blink_run():
+    global current_blink
+    while True:
+        for c in current_blink:
+            if c == '.':
+                blink_dot()
+            elif c == '-':
+                blink_dash()
+            elif c == 'Y':
+                blink_long()
+            elif c == ' ':
+                led_off()
+                time.sleep(.2)
+            elif c == 'N':
+                led_off()
+                time.sleep(5)
+        time.sleep(1)
+
+def have_internet():
+    global config
+    conn = httplib.HTTPConnection(config['internet_check'], timeout=5)
+    try:
+        conn.request("HEAD", "/")
+        conn.close()
+        log('internet is up')
+        return True
+    except:
+        conn.close()
+        log('Internet is down')
+        return False
+
+def check_connection(process, service, host=False):
+    cmd = "lsof -i -n | grep " + process + " | grep ESTABLISHED | "
+    if host:
+        cmd += "grep \"" + host + ":" + service + "\""
+    else:
+        cmd += "grep \":" + service + "\""
+    connected = os.system(cmd)
+    connected = not bool(os.WEXITSTATUS(connected))
+    log("checked service: " + cmd + " :: " + str(connected))
+    return connected
+
+def check_internet():
+    global current_blink, websocket_connected
+    os.system("echo none > /sys/class/leds/led0/trigger")
+    while True:
+        try:
+            internet = have_internet()
+        except:
+            internet = False
+        websocket_check = check_connection("ruby", "http")
+        if not internet:
+            current_blink = BLINK_SOS
+        elif not websocket_check:
+            current_blink = BLINK_FAST
+        else:
+            current_blink = BLINK_ON
+
+        if websocket_check:
+            websocket_connected = True
+        if websocket_connected and not websocket_check:
+            websocket_connected = False
+            os.system("service laserbonnet restart")
+        time.sleep(10)
+
+
+thread.start_new_thread(check_internet, ())
+thread.start_new_thread(blink_run, ())
+
+redis_conn = redis.Redis(host='localhost')
+
 def ads_read(channel):
   #configdata = bus.read_i2c_block_data(ADS1x15_DEFAULT_ADDRESS, ADS1x15_POINTER_CONFIG, 2) 
   #print("Getting config byte = 0x%02X%02X" % (configdata[0], configdata[1]))
@@ -124,6 +264,7 @@ def ads_read(channel):
        if (configdata[0] & 0x80):
          break
      except:
+       print("cannot read block")
        pass
   # read data out!
   analogdata = bus.read_i2c_block_data(ADS1x15_DEFAULT_ADDRESS, ADS1x15_POINTER_CONVERSION, 2)
@@ -138,35 +279,15 @@ def ads_read(channel):
 bus     = SMBus(1)
 HOST = 'localhost'
 PORT = 31879
-SERVER = socket.socket()
-SERVER.bind((HOST, PORT))
-SERVER.listen(10)
 
 # GPIO init
 gpio.setwarnings(False)
 gpio.setmode(gpio.BCM)
 gpio.setup(BUTTONS, gpio.IN, pull_up_down=gpio.PUD_UP)
 
-def log(msg):
-    sys.stdout.write(str(datetime.now()))
-    sys.stdout.write(": ")
-    sys.stdout.write(msg)
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+log("joybonnet starting...");
 
 laserbonnet = None
-def send_sock(msg):
-    global laserbonnet
-
-    if laserbonnet is None:
-        laserbonnet, addr = SERVER.accept()
-        print "assigned laserbonnet: " + str(addr)
-
-    laserbonnet.send(msg.encode('ascii'))
-
-def close_sock():
-    SERVER.close()
-atexit.register(close_sock)
 
 def handle_button(pin):
     time.sleep(BOUNCE_TIME)
@@ -177,21 +298,36 @@ def handle_button(pin):
       state = 0 if gpio.input(pin) else 1
 
     if state:
-        send_sock(KEY_PRESS[pin])
+        button_states[pin] = True
+        redis_conn.publish('key_state', KEY_PRESS[pin])
     else:
-        send_sock(KEY_RELEASE[pin])
+        button_states[pin] = False
+        redis_conn.publish('key_state', KEY_RELEASE[pin])
+
+    if button_states[BUTTON_A] and button_states[START]:
+        log("restarting")
+        call(["shutdown", "-r", "now"])
+    if button_states[BUTTON_B] and button_states[START]:
+        log("shutting down")
+        call(["shutdown", "-h", "now"])
+    if button_states[BUTTON_A] and button_states[SELECT]:
+        log("copying logs")
+        call(["mkdir", "-p", "/boot/logs"])
+        os.system("cp /home/pi/src/laserbonnet/logs/* /boot/logs/")
 
     if DEBUG:
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
 
 for button in BUTTONS:
-    gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
+    log("button" + str(button))
+    gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=10)
 
 while True:
   try:
     y = 800 - ads_read(0)
     x = ads_read(1) - 800
   except IOError:
+    print("ioerror ads_read")
     continue
   #print("(%d , %d)" % (x, y))
 
