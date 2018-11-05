@@ -20,6 +20,7 @@ from datetime import datetime
 from subprocess import call
 import thread
 import yaml
+import redis
 
 try:
     import httplib
@@ -241,6 +242,8 @@ def check_internet():
 thread.start_new_thread(check_internet, ())
 thread.start_new_thread(blink_run, ())
 
+redis_conn = redis.Redis(host='localhost')
+
 def ads_read(channel):
   #configdata = bus.read_i2c_block_data(ADS1x15_DEFAULT_ADDRESS, ADS1x15_POINTER_CONFIG, 2) 
   #print("Getting config byte = 0x%02X%02X" % (configdata[0], configdata[1]))
@@ -276,44 +279,15 @@ def ads_read(channel):
 bus     = SMBus(1)
 HOST = 'localhost'
 PORT = 31879
-SERVER = socket.socket()
-SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-SERVER.bind((HOST, PORT))
-SERVER.listen(10)
 
 # GPIO init
 gpio.setwarnings(False)
 gpio.setmode(gpio.BCM)
 gpio.setup(BUTTONS, gpio.IN, pull_up_down=gpio.PUD_UP)
 
-
 log("joybonnet starting...");
 
 laserbonnet = None
-
-def accept_connection():
-    global laserbonnet, addr
-    while True:
-        laserbonnet, addr = SERVER.accept()
-        print "assigned laserbonnet: " + str(addr)
-
-thread.start_new_thread(accept_connection, ())
-
-def send_sock(msg):
-    global laserbonnet
-
-    try:
-        if laserbonnet is not None:
-            laserbonnet.send(msg.encode('ascii'))
-            log("sending msg")
-
-    except:
-        log("could not send" + msg.encode('ascii'))
-        pass
-
-def close_sock():
-    SERVER.close()
-atexit.register(close_sock)
 
 def handle_button(pin):
     time.sleep(BOUNCE_TIME)
@@ -325,10 +299,10 @@ def handle_button(pin):
 
     if state:
         button_states[pin] = True
-        send_sock(KEY_PRESS[pin])
+        redis_conn.publish('key_state', KEY_PRESS[pin])
     else:
         button_states[pin] = False
-        send_sock(KEY_RELEASE[pin])
+        redis_conn.publish('key_state', KEY_RELEASE[pin])
 
     if button_states[BUTTON_A] and button_states[START]:
         log("restarting")
@@ -345,7 +319,8 @@ def handle_button(pin):
         log("Pin: {}, KeyCode: {}, Event: {}".format(pin, key, 'press' if state else 'release'))
 
 for button in BUTTONS:
-    gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=1)
+    log("button" + str(button))
+    gpio.add_event_detect(button, gpio.BOTH, callback=handle_button, bouncetime=10)
 
 while True:
   try:

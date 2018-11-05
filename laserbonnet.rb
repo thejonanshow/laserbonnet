@@ -45,13 +45,12 @@ class Laserbonnet
 
     if @env == 'development'
       puts 'Starting in development mode...'
-      @joy = nil
     else
       websocket_url = 'wss://spaceblazer.cloud/cable'
-      @joy = TCPSocket.open('localhost', 31879)
     end
 
     @redis = Redis.new(url: redis_url)
+    @redis_ipc = Redis.new(url: 'redis://localhost:6379')
     @channel = @config["redis"]["channel"]
 
     #start_remote_log
@@ -73,6 +72,18 @@ class Laserbonnet
     handle_error(e)
   end
 
+  def listen
+    @redis_ipc.subscribe('key_state') do |on|
+      on.message do |channel, msg|
+        puts "#{channel} #{msg}"
+        msg = check_combo(msg)
+        next if duplicate? msg
+        break if msg =~ /(q|\u0003)/i
+        send_command(msg)
+      end
+    end
+  end
+
   def start_remote_log
     @local_log.log "Starting remote log"
 
@@ -89,7 +100,6 @@ class Laserbonnet
   end
 
   def send(command)
-    @local_log.log "sending #{command}"
     @ansible.send_command(command)
   rescue => e
     handle_error(e)
@@ -107,44 +117,6 @@ class Laserbonnet
     else
       "unknown_serial"
     end
-  end
-
-  def get_char
-    if @env == 'development'
-      char = STDIN.getch.chomp
-
-      if char == 'w'
-        char = 'u'
-      elsif char == 'a'
-        char = 'l'
-      elsif char == 's'
-        char = 'd'
-      elsif char == 'd'
-        char = 'r'
-      elsif char == ' '
-        char = 'b'
-      elsif char =~ /(q|\u0003)|\e/i
-        char = 'q'
-      elsif char == ''
-        char = 's'
-      elsif char == '1'
-        char = '1'
-      elsif char == '2'
-        char = '2'
-      elsif char == 't'
-        char = 't'
-      elsif char == 'b'
-        char = 'b'
-      elsif char == 'z'
-        char = 'a'
-      else
-        char = ''
-      end
-    else
-      char = @joy.getc
-    end
-
-    char
   end
 
   def duplicate?(char)
@@ -195,21 +167,6 @@ class Laserbonnet
     end
 
     char
-  end
-
-  def listen
-    @local_log.log "Listening..."
-
-    while char = get_char
-      char = check_combo(char)
-      next if duplicate? char
-      break if char =~ /(q|\u0003)/i
-      send_command(char)
-    end
-
-    @local_log.log "Stopped listening..."
-  rescue => e
-    handle_error(e)
   end
 
   def send_command(char)
