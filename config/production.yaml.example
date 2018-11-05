@@ -5,5 +5,14 @@ joy:
   port: 31879
 
 redis:
-  url: redis://user:pass@server:6789
+  url: redis://user:password@host:port
   channel: laserbonnet
+
+logblazer:
+  url: http://somewhere.com
+  key: "asdflkjasfdklj"
+  version: "1.0.0"
+
+wifi:
+  -  ssid: "Comforts of Home"
+     psk: "Guest2018"

@@ -34,6 +34,7 @@ if [[ $? -eq 0 ]]; then
     git pull origin master
 	/home/pi/src/laserbonnet/scripts/install_config.rb
 	/home/pi/src/laserbonnet/scripts/install_services.rb
+    /home/pi/src/laserbonnet/scripts/install_wifi.rb
   else
     echo "no repo changes, skipping update"
   fi
