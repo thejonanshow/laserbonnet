@@ -9,7 +9,7 @@ class WebSocketClient
   # thank you shokai!
 
   include EventEmitter
-  attr_reader :url, :handshake, :thread, :recv_data
+  attr_reader :url, :handshake, :thread, :recv_data, :handshaked
 
   def self.connect(url)
     client = WebSocketClient.new

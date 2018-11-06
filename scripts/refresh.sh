@@ -32,6 +32,7 @@ if [[ $? -eq 0 ]]; then
   if [ "$changed" == "1" ]; then
     echo "repo changes, updating..."
     git pull origin master
+    sudo -H -u pi bash -c 'cd ~/src/laserbonnet && rake decryptconfig'
 	/home/pi/src/laserbonnet/scripts/install_config.rb
 	/home/pi/src/laserbonnet/scripts/install_services.rb
     /home/pi/src/laserbonnet/scripts/install_wifi.rb
