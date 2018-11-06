@@ -114,9 +114,14 @@ class Ansible
     remote_log.log("info", "connecting to websocket")
 
     Thread.new do
-      connection.on :open do
+      if connection.handshaked then
         remote_log.log("info", "connected to websocket")
         connection.send subscribe
+      else
+        connection.on :open do
+          remote_log.log("info", "connected to websocket")
+          connection.send subscribe
+        end
       end
 
       connection.on :message do |data|
