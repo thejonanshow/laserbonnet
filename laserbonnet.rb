@@ -46,7 +46,7 @@ class Laserbonnet
     if @env == 'development'
       puts 'Starting in development mode...'
     else
-      websocket_url = 'wss://spaceblazer.cloud/cable'
+      websocket_url = 'wss://spaceblazer-tokyo.herokuapp.com/cable'
     end
 
     @redis = Redis.new(url: redis_url)
